@@ -2,6 +2,10 @@
 const gameArea = document.querySelector('.game-area')
 const DOMSquare = document.querySelector('.square')
 const dice = document.querySelector('#dice-number')
+const diceScreen = document.querySelector('.dice')
+const health = document.querySelector('.num-health')
+const playerchosenNumber = document.querySelector('#player-number-choice')
+const mines = document.querySelector('.num-mines')
 //Functions
 const sleep = async (milliseconds) => {
   await new Promise(resolve => {
@@ -23,7 +27,9 @@ class GameController {
     ]
     this.playerCurrentPosition = [7, 7]
     this.playerCurrentSquare = null
-
+    this.player = new Player(3, 0, this)
+    health.innerText = this.player.health
+    this.mines = 14
   }
   static squareCount = 0
 
@@ -68,55 +74,131 @@ class GameController {
     return callback
   }
 
-  async changePlayerCurrentPosition(position) {
+  changePlayerCurrentPosition(position) {
     let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
     if (selectedSquare.classList.contains('selected')) {
       selectedSquare.classList.remove('selected')
-      if (!this.playerCurrentSquare.isItAMine) {
-        selectedSquare.style.backgroundColor = 'blue'
-      }
+    }
+    if (!this.playerCurrentSquare.isItAMine) {
+      this.revealSelected()
     }
     this.playerCurrentPosition = []
     this.playerCurrentPosition.push(position[0], position[1])
     this.playerCurrentSquare = this.map[this.playerCurrentPosition[0] - 1][this.playerCurrentPosition[1] - 1]
-    console.log(this.playerCurrentSquare);
     selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
-    console.dir(selectedSquare);
     selectedSquare.classList.add('selected')
   }
 
-  checkIfPlayerIsOnMine() {
-    if (this.playerCurrentPosition.isItAMine) {
-
+  async checkIfPlayerIsOnMine() {
+    if (this.playerCurrentSquare.isItAMine) {
+      diceScreen.style.display = 'none'
+      let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
+      console.log(selectedSquare.childNodes.length)
+      if (selectedSquare.childNodes.length <= 0) {
+        console.log('ran');
+        let m = document.createElement('p')
+        m.innerText = 'M'
+        selectedSquare.appendChild(m)
+        m.parentNode.style.backgroundColor = 'black'
+        this.mines--
+        mines.innerText = this.mines
+      }
+      this.player.health -= 1
+      health.innerText = `${this.player.health}`
+      await sleep(1000)
+      if (this.player.health <= 0) {
+        this.clear()
+        return
+      }
+      this.player.move(this.playerCurrentPosition, 1)
+    } else {
+      diceScreen.style.display = 'block'
     }
   }
 
 
   async rollDice() {
+    this.player.checkIfLucky()
+    let randomNum;
     for (let i = 0; i < 20; i++) {
-      let randomNum = Math.floor((Math.random() * 6) + 1)
+      randomNum = Math.floor((Math.random() * 6) + 1)
       dice.innerText = randomNum
       await sleep(25)
+      if (this.player.isLucky === true && i === 19 && !(playerchosenNumber.value === '')) {
+        randomNum = playerchosenNumber.value
+        dice.innerText = randomNum
+      }
     }
-    return randomNum;
+    await sleep(1000)
+    diceScreen.style.display = 'none'
+    await this.player.move(this.playerCurrentPosition, randomNum)
+    dice.addEventListener('click', startDice)
   }
 
   selectFirstSquare() {
     let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
-    console.dir(selectedSquare);
+    console.log(this.playerCurrentSquare);
     selectedSquare.classList.add('selected')
   }
 
   revealSelected() {
-    let lastSelected = document.querySelector('.selected')
-    lastSelected.classList.remove('.selected')
+    //let lastSelected = document.querySelector('.selected')
+    //lastSelected.classList.remove('.selected')
     if (this.playerCurrentSquare.isItAMine) {
       let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
       let m = document.createElement('p')
       m.innerText = 'M'
       selectedSquare.appendChild(m)
       m.parentNode.style.backgroundColor = 'black'
+    } else {
+      let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
+      if (!selectedSquare.classList.contains('selected')){
+        selectedSquare.style.backgroundColor = 'blue'
+      }
+
     }
+  }
+
+
+
+  displayDiceScreen() {
+    diceScreen.style.display = 'block'
+  }
+
+  async clear() {
+    GameController.squareCount = 0
+    this.map = [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+    this.playerCurrentPosition = [7, 7]
+    this.playerCurrentSquare = null;
+    this.player = new Player(3, 0, this)
+    health.innerText = this.player.health
+    for (let i = 0; i < 49; i++) {
+      gameArea.removeChild(gameArea.lastChild)
+      await sleep(65)
+    }
+
+    this.newGame()
+  }
+
+  async newGame() {
+
+    await sleep(1000)
+    game.createMineMap()
+    console.log(this.map)
+    await game.createsDOMSquares()
+    game.selectFirstSquare()
+    await sleep(1000)
+    game.displayDiceScreen()
+    dice.addEventListener('click', startDice)
+
   }
 
 }
@@ -129,7 +211,6 @@ class Square {
     this.isItAMine = isItAMine
     this.isItReavealed = isItReavealed
     this.sqarePlacement = sqarePlacement
-
   }
 
 }
@@ -137,12 +218,14 @@ class Square {
 
 
 class Player {
-  constructor(health, points, game) {
+  constructor(health, points, game, luck) {
     this.health = health
     this.points = points
     this.position = [7, 7]
     this.Square = null;
     this.game = game
+    this.luck = .99
+    this.isLucky = false
   }
 
   async move(from, howManySpaces) {
@@ -150,42 +233,52 @@ class Player {
     let fromSquareIndex = []
     fromSquareIndex.push(fromSquare.sqarePlacement[0])
     fromSquareIndex.push(fromSquare.sqarePlacement[1])
+    if (fromSquareIndex[0] === 1 && fromSquareIndex[1] < 6 && howManySpaces >= (fromSquareIndex[1] - 1)) {
+      howManySpaces = fromSquareIndex[1] - 1
+    }
     for (let i = 1; i <= howManySpaces; i++) {
-      if (this.direction = 'froward') {
-        if (fromSquareIndex[1] - 1 <= 0) {
-          fromSquareIndex[0] = fromSquareIndex[0] - 1
-          fromSquareIndex[1] = 7
-          this.game.changePlayerCurrentPosition(fromSquareIndex)
-          await sleep(500)
-          if (i !== howManySpaces) {
-            this.game.revealSelected()
-          }
-        } else {
-          fromSquareIndex[1] = fromSquareIndex[1] - 1
-          this.game.changePlayerCurrentPosition(fromSquareIndex)
-          await sleep(500)
-          if (i !== howManySpaces) {
-            this.game.revealSelected()
-          }
+      if (fromSquareIndex[1] - 1 <= 0) {
+        fromSquareIndex[0] = fromSquareIndex[0] - 1
+        fromSquareIndex[1] = 7
+        this.position = [fromSquareIndex[0], fromSquareIndex[1]]
+        this.game.changePlayerCurrentPosition(fromSquareIndex)
+        await sleep(500)
+        if (i != howManySpaces) {
+          this.game.revealSelected()
+        }
+      } else {
+        fromSquareIndex[1] = fromSquareIndex[1] - 1
+        this.position = [fromSquareIndex[0], fromSquareIndex[1]]
+        this.game.changePlayerCurrentPosition(fromSquareIndex)
+        await sleep(500)
+        if (i != howManySpaces) {
+          console.log(i, ' ', howManySpaces)
+          this.game.revealSelected()
         }
       }
-
     }
+    if (this.position[0] === 1 && this.position[1] === 1) {
+      this.game.clear()
+    } else {
+      this.game.checkIfPlayerIsOnMine()
+    }
+  }
 
+  checkIfLucky() {
+    if (Math.random() < this.luck) {
+      this.isLucky = true
+    }
+    else {
+      this.isLucky = false
+    }
   }
 
 }
 
-
-async function playGame() {
-  const game = new GameController('easy')
-  await sleep(1000)
-  const player = new Player(3, 0, game)
-  game.createMineMap()
-  await game.createsDOMSquares()
-  game.selectFirstSquare()
-  await sleep(1000)
-  player.move(game.playerCurrentPosition, 40)
+async function startDice() {
+  dice.removeEventListener('click', startDice)
+  await game.rollDice()
 }
 
-playGame()
+let game = new GameController('easy')
+game.newGame()

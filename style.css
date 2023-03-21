@@ -17,8 +17,31 @@ body{
 nav {
   background-color: #474a54;
   height: 10vh;
-  width: 100%
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
 }
+
+nav .item{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+nav h1 {
+  color: #d8dde9;
+}
+
+nav .num-health{
+  color: green;
+}
+nav .num-mines {
+  color: red;
+}
+nav .num-points {
+  color: gold;
+}
+
 
 .game-area{
   width: 90%;
@@ -64,7 +87,13 @@ nav {
   color: #d8dde9;
   text-align: center;
   padding: 15px;
+  opacity: .2;
+  transition: 1;
   display: none;
+}
+
+.dice:hover{
+opacity: .7;
 }
 
 .dice input{
