@@ -6,6 +6,16 @@ const diceScreen = document.querySelector('.dice')
 const health = document.querySelector('.num-health')
 const playerchosenNumber = document.querySelector('#player-number-choice')
 const mines = document.querySelector('.num-mines')
+const points = document.querySelector('.num-points')
+const store = document.querySelector('.store')
+const buyButtons = document.querySelectorAll('.buy-button')
+const storeButton = document.querySelector('.store-button')
+const backButton = document.querySelector('.back-button')
+const luck = document.querySelector('#percentage')
+const gridCountDOM = document.querySelector('.grid-count')
+const scoreDOM = document.querySelector('.score')
+const scoreScreen = document.querySelector('.highscore-screen')
+const playAgainBTN = document.querySelector('.play-again')
 //Functions
 const sleep = async (milliseconds) => {
   await new Promise(resolve => {
@@ -14,8 +24,8 @@ const sleep = async (milliseconds) => {
 }
 //Classes
 class GameController {
-  constructor(difficulty) {
-    this.difficulty = difficulty
+  constructor() {
+
     this.map = [
       [],
       [],
@@ -30,6 +40,8 @@ class GameController {
     this.player = new Player(3, 0, this)
     health.innerText = this.player.health
     this.mines = 14
+    this.normal = 1
+    this.gridCount = 0
   }
   static squareCount = 0
 
@@ -107,24 +119,30 @@ class GameController {
       health.innerText = `${this.player.health}`
       await sleep(1000)
       if (this.player.health <= 0) {
-        this.clear()
+        scoreScreen.style.display = 'block'
+        scoreDOM.innerText = this.gridCount
         return
       }
       this.player.move(this.playerCurrentPosition, 1)
     } else {
       diceScreen.style.display = 'block'
+      storeButton.addEventListener('click', this.displayStoreScreen)
     }
   }
 
 
   async rollDice() {
+    storeButton.removeEventListener('click', this.displayStoreScreen)
     this.player.checkIfLucky()
     let randomNum;
     for (let i = 0; i < 20; i++) {
       randomNum = Math.floor((Math.random() * 6) + 1)
       dice.innerText = randomNum
       await sleep(25)
-      if (this.player.isLucky === true && i === 19 && !(playerchosenNumber.value === '')) {
+      if (this.player.isLucky === true && i === 19 && !(playerchosenNumber.value === '') && !isNaN(playerchosenNumber.value)) {
+        if (playerchosenNumber.value > 6){
+          playerchosenNumber.value = 6
+        }
         randomNum = playerchosenNumber.value
         dice.innerText = randomNum
       }
@@ -141,31 +159,38 @@ class GameController {
     selectedSquare.classList.add('selected')
   }
 
-  revealSelected() {
+  revealSelected(currentSquare = this.playerCurrentSquare) {
     //let lastSelected = document.querySelector('.selected')
     //lastSelected.classList.remove('.selected')
-    if (this.playerCurrentSquare.isItAMine) {
-      let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
+    console.log('run');
+    let selectedSquare = document.getElementById(`${currentSquare.squareId}`)
+    if (currentSquare.isItAMine && !(currentSquare.isItReavealed)) {
       let m = document.createElement('p')
       m.innerText = 'M'
       selectedSquare.appendChild(m)
       m.parentNode.style.backgroundColor = 'black'
-    } else {
-      let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
-      if (!selectedSquare.classList.contains('selected')){
+    } else if (!(currentSquare.isItReavealed)){
         selectedSquare.style.backgroundColor = 'blue'
-      }
+        this.addPoints()
+      
 
     }
+    currentSquare.isItReavealed = true
   }
 
 
 
   displayDiceScreen() {
+    store.style.display = 'none'
+      for (let button of buyButtons) {
+        button.removeEventListener('click', this.buy)
+      }
+      backButton.removeEventListener('click', this.displayDiceScreen)  
     diceScreen.style.display = 'block'
+    storeButton.addEventListener('click', this.displayStoreScreen)
   }
 
-  async clear() {
+  async clear(isFresh) {
     GameController.squareCount = 0
     this.map = [
       [],
@@ -178,27 +203,94 @@ class GameController {
     ]
     this.playerCurrentPosition = [7, 7]
     this.playerCurrentSquare = null;
+    if (isFresh){
     this.player = new Player(3, 0, this)
+    gridCountDOM.innerText = 0
+    points.innerText = 0      
+    }
     health.innerText = this.player.health
     for (let i = 0; i < 49; i++) {
       gameArea.removeChild(gameArea.lastChild)
       await sleep(65)
     }
-
+    dice.removeEventListener('click', startDice)
     this.newGame()
   }
 
   async newGame() {
-
     await sleep(1000)
-    game.createMineMap()
+    this.createMineMap()
     console.log(this.map)
-    await game.createsDOMSquares()
-    game.selectFirstSquare()
+    await this.createsDOMSquares()
+    this.selectFirstSquare()
     await sleep(1000)
-    game.displayDiceScreen()
+    this.displayDiceScreen()
     dice.addEventListener('click', startDice)
 
+
+  }
+
+  addPoints() {
+    console.log(this.normal)
+    console.log(this.player.points);
+    this.player.points += this.normal
+    points.innerText = this.player.points
+  }
+
+  displayStoreScreen() {
+    storeButton.removeEventListener('click', this.displayStoreScreen)
+    diceScreen.style.display = 'none'
+    store.style.display = 'block'
+    backButton.addEventListener('click', () => {
+      game.displayDiceScreen()
+    })
+    for (let button of buyButtons) {
+      button.addEventListener('click', game.buy)
+    }
+  }
+
+  buy(e) {
+    console.log(e.target)
+    if (e.target.classList.contains('line-of-sight')){
+      game.player.points -= 15
+      game.lineofSight()
+    } else if (e.target.classList.contains('double-points')){
+      game.player.points -= 50
+      game.doublePoints()
+    } else if (e.target.classList.contains('increase-luck')){
+      game.player.points -= 30
+      game.increaseLuck()
+    }
+    points.innerText = game.player.points
+  }
+
+  lineofSight() {
+    if (this.playerCurrentPosition[1] != 1){
+      for (let square of this.map[this.playerCurrentPosition[0] - 1]) {
+        console.log(square.sqarePlacement, this.playerCurrentPosition[1]);
+        if (square.sqarePlacement[1] < this.playerCurrentPosition[1] && square.isItAMine) {
+          console.log(square);
+          square.reveal()
+        }
+      }
+    } else {
+      for (let square of this.map[this.playerCurrentPosition[0] - 2]) {
+        console.log(square.sqarePlacement, this.playerCurrentPosition[1]);
+        if (square.sqarePlacement[1] >= this.playerCurrentPosition[1] && square.isItAMine) {
+          console.log(square);
+          square.reveal()
+        }
+      }
+    }
+  }
+
+  increaseLuck(){
+    game.player.luck += .05
+    luck.innerText = `${(game.player.luck * 100)}%`
+  }
+
+  doublePoints(){
+    this.normal *= 2
   }
 
 }
@@ -207,10 +299,15 @@ class GameController {
 class Square {
   constructor(squareId, isItAMine, isItReavealed, sqarePlacement) {
     GameController.squareCount++
+    this.jSquareID = GameController.squareCount
     this.squareId = `square${GameController.squareCount}`
     this.isItAMine = isItAMine
     this.isItReavealed = isItReavealed
     this.sqarePlacement = sqarePlacement
+  }
+
+  reveal() {
+    game.revealSelected(this)
   }
 
 }
@@ -235,6 +332,7 @@ class Player {
     fromSquareIndex.push(fromSquare.sqarePlacement[1])
     if (fromSquareIndex[0] === 1 && fromSquareIndex[1] < 6 && howManySpaces >= (fromSquareIndex[1] - 1)) {
       howManySpaces = fromSquareIndex[1] - 1
+      console.log(howManySpaces);
     }
     for (let i = 1; i <= howManySpaces; i++) {
       if (fromSquareIndex[1] - 1 <= 0) {
@@ -258,7 +356,9 @@ class Player {
       }
     }
     if (this.position[0] === 1 && this.position[1] === 1) {
-      this.game.clear()
+      this.game.clear(false)
+      this.game.gridCount++
+      gridCountDOM.innerText = this.game.gridCount
     } else {
       this.game.checkIfPlayerIsOnMine()
     }
@@ -282,3 +382,8 @@ async function startDice() {
 
 let game = new GameController('easy')
 game.newGame()
+playAgainBTN.addEventListener('click', () => {
+  console.log('ran');
+  game.clear(true)
+  scoreScreen.style.display = 'none'
+})

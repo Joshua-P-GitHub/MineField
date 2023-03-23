@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minefield</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
 </head>
 <body>
   <main>
@@ -15,16 +16,16 @@
       <h1 class="num-health">1</h1>
     </div>
     <div class="diffuculty item">
-      <h1>difficulty</h1>
-      <h1 class="">Easy</h1>
+      <h1>Grids Completed</h1>
+      <h1 class="grid-count">0</h1>
     </div>
     <div class="mines-left item">
       <h1>mines left</h1>
       <h1 class="num-mines">14</h1>
     </div>
     <div class="points item">
-      <h1>points</h1>
-      <h1 class="num-points">4</h1>
+      <h1 class="points">points</h1>
+      <h1 class="num-points">0</h1>
     </div>
 
 
@@ -44,7 +45,46 @@
     <input type="text" value="" id="player-number-choice">      
     </div>
     <div class="bottom">
-    <h1 id="dice-number">0</h1>     
+    <h1 id="dice-number" class="btn">0</h1> 
+    <h1 class="store-button btn">Store</h1>    
+    </div>
+  </div>
+  <div class="store">
+    <div class="store-head">
+  <div class="store-head-left store-head-item">
+    <div class="back-button">
+     <span class="material-symbols-outlined">
+        arrow_back
+        </span>      
+    </div>
+    </div>
+    <div class="store-head-mid store-head-item">
+    <h1>Store</h1>      
+    </div>      
+    </div> 
+    <div class="container">
+      <div class="store-item">
+        <h1>Line of sight</h1>
+        <h1 class="price">15</h1>
+        <h1 class="line-of-sight buy-button btn">Buy</h1>
+      </div>
+      <div class="store-item">
+        <h1>increase luck</h1>
+        <h1 class="price">30</h1>
+        <h1 class="increase-luck buy-button btn">Buy</h1>
+      </div>
+      <div class="store-item">
+        <h1>Double Points</h1>
+        <h1 class="price">50</h1>
+        <h1 class="double-points buy-button btn">Buy</h1>
+      </div>
+    </div>
+  </div>
+  <div class="highscore-screen">
+    <div class="container">
+      <h1>Your score was</h1>
+      <h1 class="score">10</h1>
+      <h1 class="play-again btn">Play Again</h1>
     </div>
   </div>
   <script src="app.js"></script>

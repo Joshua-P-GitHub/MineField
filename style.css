@@ -135,3 +135,97 @@ main{
 .selected{
   background-color: #d8dde9;
 }
+
+.store {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  height: fit-content;
+  background-color: #23252a;
+  color: #d8dde9;
+  text-align: center;
+  padding: 15px;
+  opacity: .2;
+  transition: 1;
+  display: none;
+}
+
+.store .container{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.store:hover {
+  opacity: .7;
+}
+ .store-item{
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 15px;
+}
+
+.dice .bottom .store-button  {
+  font-size: 5em;
+  color: yellow;
+  border-top: 1px solid yellow;
+}
+
+.store-head {
+  display: flex;
+  justify-content: space-between;
+}
+
+.store-head-item{
+  width: 80%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.store-head .store-head-left{
+  width: 70%;
+
+}
+
+.highscore-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  height: fit-content;
+  background-color: #23252a;
+  color: #d8dde9;
+  text-align: center;
+  padding: 15px;
+  opacity: 1;
+  transition: 1;
+  display: none;
+}
+
+.highscore-screen .container{
+  padding: 15px;
+}
+
+
+.btn:hover {
+  background-color: white;
+  cursor: pointer;
+}
+
+.store .btn:hover {
+  color: green;
+  background: none
+}
+
+.price {
+  color: yellow;
+}
+
+.back-button{
+  cursor: pointer;
+}
+
