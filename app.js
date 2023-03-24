@@ -64,10 +64,10 @@ class GameController {
       }
       for (let i = 0; i < 2; i++) {
         let int = Math.floor(Math.random() * spots.length)
-        int = spots[int]
-        let chosenSqaure = this.map[rowInt - 1][int - 1]
+        let spot = spots[int]
+        let chosenSqaure = this.map[rowInt - 1][spot - 1]
         chosenSqaure.isItAMine = true;
-        spots.splice(int - 1, 1)
+        spots.splice(int, 1)
       }
       rowInt++
     }
@@ -91,9 +91,7 @@ class GameController {
     if (selectedSquare.classList.contains('selected')) {
       selectedSquare.classList.remove('selected')
     }
-    if (!this.playerCurrentSquare.isItAMine) {
       this.revealSelected()
-    }
     this.playerCurrentPosition = []
     this.playerCurrentPosition.push(position[0], position[1])
     this.playerCurrentSquare = this.map[this.playerCurrentPosition[0] - 1][this.playerCurrentPosition[1] - 1]
@@ -105,15 +103,8 @@ class GameController {
     if (this.playerCurrentSquare.isItAMine) {
       diceScreen.style.display = 'none'
       let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
-      console.log(selectedSquare.childNodes.length)
       if (selectedSquare.childNodes.length <= 0) {
-        console.log('ran');
-        let m = document.createElement('p')
-        m.innerText = 'M'
-        selectedSquare.appendChild(m)
-        m.parentNode.style.backgroundColor = 'black'
-        this.mines--
-        mines.innerText = this.mines
+       this.revealSelected()
       }
       this.player.health -= 1
       health.innerText = `${this.player.health}`
@@ -136,12 +127,12 @@ class GameController {
     this.player.checkIfLucky()
     let randomNum;
     for (let i = 0; i < 20; i++) {
-      randomNum = Math.floor((Math.random() * 6) + 1)
+      randomNum = Math.floor((Math.random() * 12) + 1)
       dice.innerText = randomNum
       await sleep(25)
       if (this.player.isLucky === true && i === 19 && !(playerchosenNumber.value === '') && !isNaN(playerchosenNumber.value)) {
-        if (playerchosenNumber.value > 6){
-          playerchosenNumber.value = 6
+        if (playerchosenNumber.value > 12){
+          playerchosenNumber.value = 12
         }
         randomNum = playerchosenNumber.value
         dice.innerText = randomNum
@@ -155,20 +146,18 @@ class GameController {
 
   selectFirstSquare() {
     let selectedSquare = document.getElementById(`${this.playerCurrentSquare.squareId}`)
-    console.log(this.playerCurrentSquare);
     selectedSquare.classList.add('selected')
   }
 
   revealSelected(currentSquare = this.playerCurrentSquare) {
-    //let lastSelected = document.querySelector('.selected')
-    //lastSelected.classList.remove('.selected')
-    console.log('run');
     let selectedSquare = document.getElementById(`${currentSquare.squareId}`)
     if (currentSquare.isItAMine && !(currentSquare.isItReavealed)) {
       let m = document.createElement('p')
       m.innerText = 'M'
       selectedSquare.appendChild(m)
       m.parentNode.style.backgroundColor = 'black'
+      this.mines--
+      mines.innerText = this.mines
     } else if (!(currentSquare.isItReavealed)){
         selectedSquare.style.backgroundColor = 'blue'
         this.addPoints()
@@ -205,10 +194,13 @@ class GameController {
     this.playerCurrentSquare = null;
     if (isFresh){
     this.player = new Player(3, 0, this)
+    this.gridCount = 0
     gridCountDOM.innerText = 0
     points.innerText = 0      
     }
     health.innerText = this.player.health
+    this.mines = 14
+    mines.innerText = this.mines
     for (let i = 0; i < 49; i++) {
       gameArea.removeChild(gameArea.lastChild)
       await sleep(65)
@@ -220,7 +212,6 @@ class GameController {
   async newGame() {
     await sleep(1000)
     this.createMineMap()
-    console.log(this.map)
     await this.createsDOMSquares()
     this.selectFirstSquare()
     await sleep(1000)
@@ -231,8 +222,6 @@ class GameController {
   }
 
   addPoints() {
-    console.log(this.normal)
-    console.log(this.player.points);
     this.player.points += this.normal
     points.innerText = this.player.points
   }
@@ -250,15 +239,14 @@ class GameController {
   }
 
   buy(e) {
-    console.log(e.target)
-    if (e.target.classList.contains('line-of-sight')){
-      game.player.points -= 15
+    if (e.target.classList.contains('line-of-sight') && this.player.points >= 5){
+      game.player.points -= 5
       game.lineofSight()
-    } else if (e.target.classList.contains('double-points')){
-      game.player.points -= 50
+    } else if (e.target.classList.contains('double-points') && this.player.points >= 25){
+      game.player.points -= 25
       game.doublePoints()
-    } else if (e.target.classList.contains('increase-luck')){
-      game.player.points -= 30
+    } else if (e.target.classList.contains('increase-luck')  && this.player.points >= 5 && this.player.luck < .50){
+      game.player.points -= 5
       game.increaseLuck()
     }
     points.innerText = game.player.points
@@ -267,17 +255,13 @@ class GameController {
   lineofSight() {
     if (this.playerCurrentPosition[1] != 1){
       for (let square of this.map[this.playerCurrentPosition[0] - 1]) {
-        console.log(square.sqarePlacement, this.playerCurrentPosition[1]);
         if (square.sqarePlacement[1] < this.playerCurrentPosition[1] && square.isItAMine) {
-          console.log(square);
           square.reveal()
         }
       }
     } else {
       for (let square of this.map[this.playerCurrentPosition[0] - 2]) {
-        console.log(square.sqarePlacement, this.playerCurrentPosition[1]);
         if (square.sqarePlacement[1] >= this.playerCurrentPosition[1] && square.isItAMine) {
-          console.log(square);
           square.reveal()
         }
       }
@@ -299,7 +283,6 @@ class GameController {
 class Square {
   constructor(squareId, isItAMine, isItReavealed, sqarePlacement) {
     GameController.squareCount++
-    this.jSquareID = GameController.squareCount
     this.squareId = `square${GameController.squareCount}`
     this.isItAMine = isItAMine
     this.isItReavealed = isItReavealed
@@ -319,9 +302,8 @@ class Player {
     this.health = health
     this.points = points
     this.position = [7, 7]
-    this.Square = null;
     this.game = game
-    this.luck = .99
+    this.luck = .10
     this.isLucky = false
   }
 
@@ -330,9 +312,8 @@ class Player {
     let fromSquareIndex = []
     fromSquareIndex.push(fromSquare.sqarePlacement[0])
     fromSquareIndex.push(fromSquare.sqarePlacement[1])
-    if (fromSquareIndex[0] === 1 && fromSquareIndex[1] < 6 && howManySpaces >= (fromSquareIndex[1] - 1)) {
+    if (fromSquareIndex[0] === 1 && fromSquareIndex[1] < 12 && howManySpaces >= (fromSquareIndex[1] - 1)) {
       howManySpaces = fromSquareIndex[1] - 1
-      console.log(howManySpaces);
     }
     for (let i = 1; i <= howManySpaces; i++) {
       if (fromSquareIndex[1] - 1 <= 0) {
@@ -341,18 +322,11 @@ class Player {
         this.position = [fromSquareIndex[0], fromSquareIndex[1]]
         this.game.changePlayerCurrentPosition(fromSquareIndex)
         await sleep(500)
-        if (i != howManySpaces) {
-          this.game.revealSelected()
-        }
       } else {
         fromSquareIndex[1] = fromSquareIndex[1] - 1
         this.position = [fromSquareIndex[0], fromSquareIndex[1]]
         this.game.changePlayerCurrentPosition(fromSquareIndex)
         await sleep(500)
-        if (i != howManySpaces) {
-          console.log(i, ' ', howManySpaces)
-          this.game.revealSelected()
-        }
       }
     }
     if (this.position[0] === 1 && this.position[1] === 1) {
@@ -383,7 +357,6 @@ async function startDice() {
 let game = new GameController('easy')
 game.newGame()
 playAgainBTN.addEventListener('click', () => {
-  console.log('ran');
   game.clear(true)
   scoreScreen.style.display = 'none'
 })
