@@ -245,7 +245,7 @@ class GameController {
     } else if (e.target.classList.contains('double-points') && game.player.points >= 25){
       game.player.points -= 25
       game.doublePoints()
-    } else if (e.target.classList.contains('increase-luck')  && game.player.points >= 5 && this.player.luck < .50){
+    } else if (e.target.classList.contains('increase-luck')  && game.player.points >= 5 && game.player.luck < .50){
       game.player.points -= 5
       game.increaseLuck()
     }
