@@ -239,13 +239,13 @@ class GameController {
   }
 
   buy(e) {
-    if (e.target.classList.contains('line-of-sight') && this.player.points >= 5){
+    if (e.target.classList.contains('line-of-sight') && game.player.points >= 5){
       game.player.points -= 5
       game.lineofSight()
-    } else if (e.target.classList.contains('double-points') && this.player.points >= 25){
+    } else if (e.target.classList.contains('double-points') && game.player.points >= 25){
       game.player.points -= 25
       game.doublePoints()
-    } else if (e.target.classList.contains('increase-luck')  && this.player.points >= 5 && this.player.luck < .50){
+    } else if (e.target.classList.contains('increase-luck')  && game.player.points >= 5 && this.player.luck < .50){
       game.player.points -= 5
       game.increaseLuck()
     }
